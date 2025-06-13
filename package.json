@@ -1,0 +1,27 @@
+{
+  "name": "retarot-discord-bot",
+  "version": "1.0.0",
+  "description": "reTarot-discord-bot",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "nodemon index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Vantan22/reTarot-discord-bot.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/Vantan22/reTarot-discord-bot/issues"
+  },
+  "homepage": "https://github.com/Vantan22/reTarot-discord-bot#readme",
+  "dependencies": {
+    "discord.js": "^14.19.3",
+    "dotenv": "^16.5.0"
+  }
+}

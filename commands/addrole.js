@@ -39,7 +39,7 @@ export async function execute(interaction) {
     await member.roles.add(role);
     
     // Gửi thông báo thành công
-    await interaction.reply({ content: `Đã thêm vai trò ${role.name} cho ${targetUser.tag}!`, ephemeral: false });
+    await interaction.reply({ content: `Đã thêm vai trò ${role.name} cho ${targetUser.tag}!`, ephemeral: true });
     console.log(`Added role ${role.name} to ${targetUser.tag}`);
   } catch (error) {
     console.error("Error in addrole command:", error);

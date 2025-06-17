@@ -1,5 +1,6 @@
 import { Client, GatewayIntentBits, REST, Routes, Collection, SlashCommandBuilder } from "discord.js";
 import dotenv from "dotenv";
+import redis from "./config/redis.js";
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
@@ -10,6 +11,9 @@ import {
 } from "./controller/controller.js";
 dotenv.config();
 
+redis.on("connect", () => {
+  console.log("Redis connected");
+})
 // Thiết lập đường dẫn cho thư mục commands
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);

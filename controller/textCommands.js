@@ -1,14 +1,13 @@
 // Các hàm xử lý lệnh văn bản
 import {
-  EmbedBuilder,
-  ButtonBuilder,
   ActionRowBuilder,
+  ButtonBuilder,
   ButtonStyle,
+  EmbedBuilder,
 } from "discord.js";
-import { events } from "../commands/createevent.js";
 import dotenv from "dotenv";
-import redis from "../config/redis.js";
-import api from "../config/axios.js";
+import { events } from "../commands/createevent.js";
+import callApi from "../config/call-api.js";
 dotenv.config();
 
 // Hàm xử lý lệnh ping
@@ -422,103 +421,12 @@ export async function handleListEvents(channel) {
 
 export async function handleGetUser(author, channel) {
   try {
-    const backendUrl = process.env.BACKEND_URL;
-    let accessToken = await redis.get(`${author.id}_accessToken`);
-    let refreshToken = await redis.get(`${author.id}_refreshToken`);
-
-    if (!accessToken && !refreshToken) {
-      return channel.send("Bạn chưa đăng nhập!");
-    }
-    if (!accessToken) {
-      // const response = await axios.post(`${backendUrl}/api/auth/refresh`, {
-      //   withCredentials: true,
-
-      //   headers: {
-      //     "Content-Type": "application/json",
-      //     cookies: `refreshToken=${refreshToken};`,
-      //   },
-      // });
-      api.defaults.headers.common["Cookie"] = `refreshToken=${refreshToken}`;
-      api.post(`${backendUrl}/api/auth/refresh`);
-      const response = await api.post(`${backendUrl}/api/auth/refresh`);
-      refreshToken = response.cookies("refreshToken");
-      accessToken = response.cookies("accessToken");
-      console.log("refreshToken", refreshToken);
-      console.log("accessToken", accessToken);
-
-      // console.log(response);
-      // const cookiesSplited = cookies.split(";");
-      // accessToken = cookiesSplited
-      //   .find((cookie) => cookie.trim().startsWith("accessToken="))
-      //   .split("=")[1];
-      // refreshToken = cookiesSplited[5].split(", ")[1].split("=")[1];
-
-      await redis.set(`${author.id}_accessToken`, accessToken, "EX", 60 * 15);
-      await redis.set(
-        `${author.id}_refreshToken`,
-        refreshToken,
-        "EX",
-        60 * 60 * 24 * 7
-      );
-    }
-    // const bodyAccessToken = await accessToken.json();
-    // console.log(accessToken, "accessToken");
-    // console.log(bodyAccessToken, "bodyAccessToken");
-    // console.log(accessToken);
-    // console.log(response);
-    // const userData = await fetch(`${backendUrl}/me`, {
-    //   method: "GET",
-    //   credentials: "include",
-    // });
-    // console.log(userData);
-
-    // const userEmbed = new EmbedBuilder()
-    //   .setColor(0x0099ff)
-    //   .setTitle("Thông tin người dùng:")
-    //   .setDescription("Test thông tin người dùng:")
-    //   .addFields(
-    //     {
-    //       name: "ID",
-    //       value: userData.data[0]._id,
-    //       inline: true,
-    //     },
-    //     {
-    //       name: "Email",
-    //       value: userData.data[0].email,
-    //       inline: true,
-    //     },
-    //     {
-    //       name: "Role",
-    //       value: userData.data[0].role,
-    //       inline: true,
-    //     },
-    //     {
-    //       name: "",
-    //       value: "",
-    //     },
-    //     {
-    //       name: "ID",
-    //       value: userData.data[1]._id,
-    //       inline: true,
-    //     },
-    //     {
-    //       name: "Email",
-    //       value: userData.data[1].email,
-    //       inline: true,
-    //     },
-    //     {
-    //       name: "Role",
-    //       value: userData.data[1].role,
-    //       inline: true,
-    //     }
-    //   )
-    //   .setImage(userData.data[0].profile.avatar)
-    //   .setTimestamp();
-    // channel.send({ embeds: [userEmbed] });
-    // })
-    // channel.send("Send success");
+    const response = await callApi.get(author.id, "/api/me");
+    const user = response.data;
+    // console.log("User🚀: ", user);
+    channel.send(`${JSON.stringify(user)} đã đăng nhập vào tài khoản reTarot!`);
   } catch (error) {
-    console.error("Lỗi khi lấy thông tin người dùng:", error);
+    // console.error("Lỗi khi lấy thông tin người dùng:", error);
     channel.send("Đã xảy ra lỗi khi lấy thông tin người dùng.");
   }
 }

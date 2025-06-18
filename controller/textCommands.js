@@ -8,6 +8,7 @@ import {
 import { events } from "../commands/createevent.js";
 import dotenv from "dotenv";
 import redis from "../config/redis.js";
+import api from "../config/axios.js";
 dotenv.config();
 
 // Hàm xử lý lệnh ping
@@ -429,22 +430,28 @@ export async function handleGetUser(author, channel) {
       return channel.send("Bạn chưa đăng nhập!");
     }
     if (!accessToken) {
-      const response = await fetch(`${backendUrl}/api/auth/refresh`, {
-        method: "POST",
-        credentials: "include",
+      // const response = await axios.post(`${backendUrl}/api/auth/refresh`, {
+      //   withCredentials: true,
 
-        headers: {
-          "Content-Type": "application/json",
-          "set-cookie": `refreshToken=${refreshToken};`,
-        },
-      });
-      const cookies = response.headers.get("set-cookie");
-      console.log(response);
-      const cookiesSplited = cookies.split(";");
-      accessToken = cookiesSplited
-        .find((cookie) => cookie.trim().startsWith("accessToken="))
-        .split("=")[1];
-      refreshToken = cookiesSplited[5].split(", ")[1].split("=")[1];
+      //   headers: {
+      //     "Content-Type": "application/json",
+      //     cookies: `refreshToken=${refreshToken};`,
+      //   },
+      // });
+      api.defaults.headers.common["Cookie"] = `refreshToken=${refreshToken}`;
+      api.post(`${backendUrl}/api/auth/refresh`);
+      const response = await api.post(`${backendUrl}/api/auth/refresh`);
+      refreshToken = response.cookies("refreshToken");
+      accessToken = response.cookies("accessToken");
+      console.log("refreshToken", refreshToken);
+      console.log("accessToken", accessToken);
+
+      // console.log(response);
+      // const cookiesSplited = cookies.split(";");
+      // accessToken = cookiesSplited
+      //   .find((cookie) => cookie.trim().startsWith("accessToken="))
+      //   .split("=")[1];
+      // refreshToken = cookiesSplited[5].split(", ")[1].split("=")[1];
 
       await redis.set(`${author.id}_accessToken`, accessToken, "EX", 60 * 15);
       await redis.set(

@@ -1,7 +1,8 @@
 import { SlashCommandBuilder } from "discord.js";
 import dotenv from "dotenv";
 import callApi from "../config/call-api.js";
-import redis from "../config/redis.js";
+import { tokenRedis } from "../config/redis.js";
+
 dotenv.config();
 
 export const data = new SlashCommandBuilder()
@@ -29,15 +30,13 @@ export async function execute(interaction) {
       }
     );
 
-    console.log("Response🚀: ", response.data);
-    console.log("Interaction🚀: ", interaction.user.id);
-    redis.set(
+    tokenRedis.set(
       `${interaction.user.id}_accessToken`,
       response.data.accessToken,
       "EX",
       60 * 15
     );
-    redis.set(
+    tokenRedis.set(
       `${interaction.user.id}_refreshToken`,
       response.data.refreshToken,
       "EX",

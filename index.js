@@ -1,23 +1,36 @@
-import { Client, GatewayIntentBits, REST, Routes, Collection, SlashCommandBuilder } from "discord.js";
+import {
+  Client,
+  GatewayIntentBits,
+  REST,
+  Routes,
+  Collection,
+  SlashCommandBuilder,
+} from "discord.js";
 import dotenv from "dotenv";
-import redis from "./config/redis.js";
+import { tokenRedis, authCountRedis } from "./config/redis.js";
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
+import { command, button } from "./controller/controller.js";
+import { assignRole } from "./default/assignNewMember.js";
 import {
-  assignRole,
-  command,
   sendMsgToDefaultChannel,
-} from "./controller/controller.js";
+  sendMsgToAccountChannel,
+} from "./default/sendMessage.js";
+import { handleRegistrationStep } from "./auth/register.js";
+import { log } from "console";
 dotenv.config();
 
-redis.on("connect", () => {
-  console.log("Redis connected");
-})
+tokenRedis.on("connect", () => {
+  console.log("tokenRedis connected");
+});
+authCountRedis.on("connect", () => {
+  console.log("authCountRedis connected");
+});
 // Thiết lập đường dẫn cho thư mục commands
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const commandsPath = path.join(__dirname, 'commands');
+const commandsPath = path.join(__dirname, "commands");
 
 // Khởi tạo bot discord
 const client = new Client({
@@ -44,16 +57,18 @@ client.commands = new Collection();
 // Hàm đọc và đăng ký slash commands
 async function loadSlashCommands() {
   const commands = [];
-  const commandFiles = fs.readdirSync(commandsPath).filter(file => file.endsWith('.js'));
-  
+  const commandFiles = fs
+    .readdirSync(commandsPath)
+    .filter((file) => file.endsWith(".js"));
+
   for (const file of commandFiles) {
     try {
       const filePath = path.join(commandsPath, file);
-      const fileUrl = `file://${filePath.replace(/\\/g, '/')}`;
+      const fileUrl = `file://${filePath.replace(/\\/g, "/")}`;
       const command = await import(fileUrl);
-      
+
       // Kiểm tra xem module có chứa data và execute không
-      if ('data' in command && 'execute' in command) {
+      if ("data" in command && "execute" in command) {
         client.commands.set(command.data.name, command);
         commands.push(command.data.toJSON());
         console.log(`Loaded command: ${command.data.name}`);
@@ -64,32 +79,34 @@ async function loadSlashCommands() {
       console.error(`Error loading command from ${file}:`, error);
     }
   }
-  
+
   return commands;
 }
 
 // Function chạy khi bot đăng nhập thành công
-client.once("ready", async () => {
+client.once("ready", async (client) => {
   console.log(`Logged in as ${client.user.tag}!`);
-  
+
   try {
     // Đọc và đăng ký slash commands
     const commands = await loadSlashCommands();
-    
+
     // Khởi tạo REST API client
     const rest = new REST().setToken(process.env.DISCORD_TOKEN);
-    
+
     // Đăng ký commands với Discord API
     console.log(`Refreshing ${commands.length} slash commands...`);
-    
-    const data = await rest.put(
-      Routes.applicationCommands(client.user.id),
-      { body: commands },
-    );
-    
+
+    const data = await rest.put(Routes.applicationCommands(client.user.id), {
+      body: commands,
+    });
+
     console.log(`Successfully registered ${data.length} slash commands!`);
+
+    // Remember to turn this back on
+    // sendMsgToAccountChannel(client);
   } catch (error) {
-    console.error('Error registering slash commands:', error);
+    console.error("Error registering slash commands:", error);
   }
 });
 
@@ -121,7 +138,7 @@ client.on("guildMemberRemove", (member) => {
       `Goodbye <@${member.user.id}>, we hope to see you again!`
     );
   } catch (error) {
-    console.error('Error in guildMemberRemove event:', error);
+    console.error("Error in guildMemberRemove event:", error);
   }
 });
 
@@ -131,23 +148,43 @@ client.login(process.env.DISCORD_TOKEN).catch((error) => {
 
 // Xử lý tin nhắn thông thường
 client.on("messageCreate", (message) => {
-  command(message);
+  if (message.author.bot) return;
+  if (message.channel.name.split("-")[0] === message.author.id) {
+    const authMethod = message.channel.name.split("-")[1];
+    switch (authMethod) {
+      case "registration":
+        handleRegistrationStep(message);
+        break;
+      default:
+        command(message);
+        break;
+    }
+  } else {
+    command(message);
+  }
 });
 
-// Xử lý slash commands
-client.on('interactionCreate', async interaction => {
+client.on("interactionCreate", async (interaction) => {
+  if (interaction.isButton()) {
+    button(interaction);
+    return;
+  }
+
   // Kiểm tra xem có phải là slash command không
   if (!interaction.isChatInputCommand()) return;
 
   console.log(`Received slash command: ${interaction.commandName}`);
-  
+
   // Lấy command từ collection
   const command = interaction.client.commands.get(interaction.commandName);
 
   // Nếu không tìm thấy command
   if (!command) {
     console.error(`No command matching ${interaction.commandName} was found.`);
-    return interaction.reply({ content: 'Lệnh này không tồn tại!', ephemeral: true });
+    return interaction.reply({
+      content: "Lệnh này không tồn tại!",
+      ephemeral: true,
+    });
   }
 
   try {
@@ -157,9 +194,15 @@ client.on('interactionCreate', async interaction => {
     console.error(`Error executing ${interaction.commandName}:`, error);
     // Trả lời người dùng nếu có lỗi
     if (interaction.replied || interaction.deferred) {
-      await interaction.followUp({ content: 'Có lỗi xảy ra khi thực hiện lệnh này!', ephemeral: true });
+      await interaction.followUp({
+        content: "Có lỗi xảy ra khi thực hiện lệnh này!",
+        ephemeral: true,
+      });
     } else {
-      await interaction.reply({ content: 'Có lỗi xảy ra khi thực hiện lệnh này!', ephemeral: true });
+      await interaction.reply({
+        content: "Có lỗi xảy ra khi thực hiện lệnh này!",
+        ephemeral: true,
+      });
     }
   }
 });

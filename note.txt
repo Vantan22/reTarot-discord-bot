@@ -1,0 +1,9 @@
+- Tạo nhiều kênh riêng cho mỗi người dùng đăng ký
+    * Lợi:
+        + Tạo ra nhiều kênh riêng cho mỗi người dùng, không bị ảnh hưởng bởi các kênh khác
+        + Mỗi kênh chỉ có thể được sử dụng bởi chính người dùng đó
+        + Quản lý được từng bước của người dùng
+    * Hại:
+        + Cùng một lúc phải cho người dùng gửi nhiều thông tin mới đăng ký được
+        + Khó khăn trong việc xác định người dùng đang ở bước nào vì bot đang sử dụng chủ yếu messagecreate
+        

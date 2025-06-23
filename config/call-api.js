@@ -1,11 +1,11 @@
 import api from "./axios.js";
-import redis from "./redis.js";
+import { tokenRedis } from "./redis.js";
 
 const callApi = {
   get: async (author_id, url, params) => {
     console.log("Author id🚀: ", author_id);
     try {
-      const accessToken = await redis.get(`${author_id}_accessToken`);
+      const accessToken = await tokenRedis.get(`${author_id}_accessToken`);
       console.log("Access token🚀: ", accessToken);
       const response = await api.request({
         url,
@@ -24,7 +24,7 @@ const callApi = {
   post: async (author_id, url, data) => {
     console.log("Author id🚀: ", author_id);
     try {
-      const accessToken = await redis.get(`${author_id}_accessToken`);
+      const accessToken = await tokenRedis.get(`${author_id}_accessToken`);
       console.log("Access token🚀: ", accessToken);
       const response = await api.request({
         url,
@@ -43,7 +43,7 @@ const callApi = {
   put: async (author_id, url, data) => {
     console.log("Author id🚀: ", author_id);
     try {
-      const accessToken = await redis.get(`${author_id}_accessToken`);
+      const accessToken = await tokenRedis.get(`${author_id}_accessToken`);
       console.log("Access token🚀: ", accessToken);
       const response = await api.request({
         url,
@@ -62,7 +62,7 @@ const callApi = {
   delete: async (author_id, url) => {
     console.log("Author id🚀: ", author_id);
     try {
-      const accessToken = await redis.get(`${author_id}_accessToken`);
+      const accessToken = await tokenRedis.get(`${author_id}_accessToken`);
       console.log("Access token🚀: ", accessToken);
       const response = await api.request({
         url,

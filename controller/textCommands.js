@@ -1,10 +1,5 @@
 // Các hàm xử lý lệnh văn bản
-import {
-  ActionRowBuilder,
-  ButtonBuilder,
-  ButtonStyle,
-  EmbedBuilder,
-} from "discord.js";
+import { EmbedBuilder } from "discord.js";
 import dotenv from "dotenv";
 import { events } from "../commands/createevent.js";
 import callApi from "../config/call-api.js";
@@ -423,29 +418,20 @@ export async function handleGetUser(author, channel) {
   try {
     const response = await callApi.get(author.id, "/api/me");
     const user = response.data;
-    // console.log("User🚀: ", user);
-    channel.send(`${JSON.stringify(user)} đã đăng nhập vào tài khoản reTarot!`);
+    const embed = new EmbedBuilder()
+      .setColor(0x0099ff)
+      .setTitle("Thông tin người dùng")
+      .setDescription(
+        `Tên: ${user.profile.full_name}\n
+        Ngày sinh: ${user.profile.birth_date.split("T")[0]}\n
+        Giới tính: ${user.profile.gender === "male" ? "Nam" : "Nữ"}\n
+        Role: ${user.role}`
+      )
+      .setImage(user.profile.avatar)
+      .setTimestamp();
+    channel.send({ embeds: [embed] });
   } catch (error) {
     // console.error("Lỗi khi lấy thông tin người dùng:", error);
     channel.send("Đã xảy ra lỗi khi lấy thông tin người dùng.");
   }
 }
-
-export function handleLogin(author, args, channel) {
-  const button = new ButtonBuilder()
-    .setLabel("Login")
-    .setURL(
-      "https://discord.com/oauth2/authorize?client_id=1380726573027819690&response_type=code&redirect_uri=http%3A%2F%2Flocalhost%3A2210%2Fapi%2Fauth%2Fdiscord%2Fcallback&scope=identify+email+guilds+guilds.join"
-    )
-    .setStyle(ButtonStyle.Link);
-  const row = new ActionRowBuilder().addComponents(button);
-  // https://discord.com/oauth2/authorize?client_id=1380726573027819690&response_type=code&redirect_uri=http%3A%2F%2Flocalhost%3A2210%2Fapi%2Fauth%2Fdiscord%2Fcallback&scope=identify+email+guilds+guilds.join
-}
-
-/*
-- Login:
-  + Param: username/email, password
-  + Tự truyền vào web login 
-  + Return acesstoken, refresh token
-  + Store vào threads: Id discord, access token, refresh token
-*/

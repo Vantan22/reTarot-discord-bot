@@ -11,11 +11,15 @@ import {
   handleCreateEvent,
   handleJoinEvent,
   handleGetUser,
-  handleLogin,
 } from "./textCommands.js";
-export const command = async (message) => {
+import { register } from "../auth/register.js";
+// import { login } from "../auth/login.js";
+// import { resetPassword } from "../auth/resetPassword.js";
+// import { forgotPassword } from "../auth/forgotPassword.js";
+
+export const command = (message) => {
   const rawMessage = message.content;
-  if (!rawMessage.startsWith(process.env.PREFIX, 0) || message.author.bot) {
+  if (!rawMessage.startsWith(process.env.PREFIX, 0)) {
     return;
   }
   const userCommand = rawMessage
@@ -59,8 +63,6 @@ export const command = async (message) => {
     case "user":
       handleGetUser(author, channel);
       break;
-    case "login":
-      handleLogin(author, args, channel);
     case "test":
       channel.send(author.id);
       break;
@@ -72,55 +74,28 @@ export const command = async (message) => {
       );
       break;
   }
-
-  // Set lịch event và gửi thông báo cho người dùng bấm xác nhận tham gia
 };
 
-// // Export các hàm xử lý lệnh văn bản để có thể sử dụng từ các file khác
-// export { handlePing, handleStatus, handleHelp, handleListEvents, handleAddRole, handleRemoveRole, handleEditRole, handleCreateEvent, handleJoinEvent };
-
-export async function sendMsgToDefaultChannel(client, content) {
-  try {
-    const channelId = process.env.DEFAULT_CHANNEL_ID;
-    const channel = client.channels.cache.get(channelId);
-
-    if (!channel) {
-      console.error(
-        `Channel with ID ${channelId} not found. Check your DEFAULT_CHANNEL_ID in .env file.`
-      );
-      return;
-    }
-
-    // Kiểm tra quyền truy cập
-    if (!channel.permissionsFor(client.user).has("SendMessages")) {
-      console.error(
-        `Bot does not have permission to send messages in channel ${channel.name} (${channelId}).`
-      );
-      return;
-    }
-
-    await channel.send(content);
-    console.log(
-      `Message sent to channel ${channel.name}: ${content.substring(0, 50)}${
-        content.length > 50 ? "..." : ""
-      }`
-    );
-  } catch (error) {
-    console.error("Error sending message to default channel:", error);
-  }
-}
-export async function assignRole(member, roleId) {
-  try {
-    await member.roles.add(roleId);
-  } catch (error) {
-    console.error(`Failed to assign role to ${member.user.tag}:`, error);
-  }
-}
-export async function removeRole(member, roleId) {
-  try {
-    await member.roles.remove(roleId);
-    console.log(`Removed role ${roleId} from ${member.user.tag}`);
-  } catch (error) {
-    console.error(`Failed to remove role from ${member.user.tag}:`, error);
+export function button(interaction) {
+  switch (interaction.customId) {
+    case "register":
+      // console.log("Let's register");
+      register(interaction);
+      break;
+    case "login":
+      login(interaction);
+      break;
+    case "forgotPassword":
+      forgotPassword(interaction);
+      break;
+    case "resetPassword":
+      resetPassword(interaction);
+      break;
+    default:
+      interaction.reply({
+        content: "Lệnh không hợp lệ.",
+        ephemeral: true,
+      });
+      break;
   }
 }
